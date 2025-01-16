@@ -2,7 +2,7 @@ from graphics import Line, Point
 
 
 class Cell:
-    def __init__(self, win):
+    def __init__(self, win=None):
         self.has_left_wall = True
         self.has_right_wall = True
         self.has_top_wall = True
@@ -43,6 +43,8 @@ class Cell:
         if undo:
             fill_color = "gray"
 
+        if self._win is None:
+            return
         self._win.draw_line(
             Line(Point(x_center, y_center), Point(x_center2, y_center2)), fill_color
         )
