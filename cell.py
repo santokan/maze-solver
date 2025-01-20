@@ -39,6 +39,8 @@ class Cell:
             self._win.draw_line(Line(Point(x1, y2), Point(x2, y2)), "white")
 
     def draw_move(self, to_cell, undo=False):
+        if self._win is None:
+            return
         half_size = abs(self._x2 - self._x1) // 2
         x_center = half_size + self._x1
         y_center = half_size + self._y1
