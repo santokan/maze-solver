@@ -36,11 +36,12 @@ class Maze:
         self._reset_cells_visited()
 
     def _create_cells(self):
-        row_cells = []
-        for j in range(self._num_rows):
-            c = Cell(self._win)
-            row_cells.append(c)
-        self._cells.append(row_cells)
+        self._cells = []  # Initialize self._cells as an empty list
+        for i in range(self._num_cols): # Loop through columns
+            col_cells = [] # Create a new column list
+            for j in range(self._num_rows): # Loop through rows
+                col_cells.append(Cell(self._win)) # Append cell to the column list
+            self._cells.append(col_cells) # Append the column list to self._cells
         for i in range(self._num_cols):
             for j in range(self._num_rows):
                 self._draw_cell(i, j)
