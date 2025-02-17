@@ -1,4 +1,5 @@
 from cell import Cell
+from graphics import Point, Line
 import time
 import random
 
