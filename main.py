@@ -11,8 +11,13 @@ def main():
     screen_y = 600
     cell_size_x = (screen_x - 2 * margin) / num_cols
     cell_size_y = (screen_y - 2 * margin) / num_rows
+
+    parser = argparse.ArgumentParser(description="Maze Solver")
+    parser.add_argument('--manual', action='store_true', help='Enable manual solve mode')
+    args = parser.parse_args()
+
     win = Window(screen_x, screen_y)
-    maze = Maze(margin, margin, num_rows, num_cols, cell_size_x, cell_size_y, win, manual_solve=False)
+    maze = Maze(margin, margin, num_rows, num_cols, cell_size_x, cell_size_y, win, manual_solve=args.manual)
     print("Maze created!")
     solved = maze.solve()
     if solved:
