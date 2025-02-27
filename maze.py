@@ -1,5 +1,5 @@
 from cell import Cell
-from graphics import Point
+from graphics import Point, Line
 import time
 import random
 
@@ -210,99 +210,105 @@ class Maze:
         center_x = (cell._x1 + cell._x2) / 2
         center_y = (cell._y1 + cell._y2) / 2
         player_center_point = Point(center_x, center_y)
-        line_color = "red"
+        LINE_COLOR = "red"
+        BACKTRACK_COLOR = "gray"
 
-        # check for backtracking and update line color and path
-        is_backtracking = False
-        if len(self._player_path_cells) >= 2:
-            prev_path_point = self._player_path_cells[-2]  # second to last point
-            if (
-                prev_path_point.x == player_center_point.x
-                and prev_path_point.y == player_center_point.y
-            ):
-                line_color = "gray"
-                is_backtracking = True
+        # Determine if backtracking
+        is_backtracking = (
+            len(self._player_path_cells) >= 2
+            and self._player_path_cells[-2].x == player_center_point.x
+            and self._player_path_cells[-2].y == player_center_point.y
+        )
 
-        # clear previous player path - by redrawing cells in the path - DRAW PATH *BEFORE* CLEARING CELLS
+        line_color = BACKTRACK_COLOR if is_backtracking else LINE_COLOR
+
+        # Clear previous player path by redrawing the walls only
         if self._player_path_cells:
-            for path_point in self._player_path_cells:
+            for i in range(len(self._player_path_cells) - 1):
+                path_point = self._player_path_cells[i]
                 cell_to_clear_col = int((path_point.x - self._x1) // self._cell_size_x)
                 cell_to_clear_row = int((path_point.y - self._y1) // self._cell_size_y)
+
                 if (
                     0 <= cell_to_clear_col < self._num_cols
                     and 0 <= cell_to_clear_row < self._num_rows
-                ):  # bounds check
+                ):
                     cell_to_clear = self._cells[cell_to_clear_col][cell_to_clear_row]
-                    self._win.draw_rect(
+                    x1, y1, x2, y2 = (
                         cell_to_clear._x1,
                         cell_to_clear._y1,
                         cell_to_clear._x2,
                         cell_to_clear._y2,
-                        "white",
-                    )  # redraw with white to clear
-                    self._draw_cell(
-                        cell_to_clear_col, cell_to_clear_row
-                    )  # redraw walls
+                    )
 
-        # update path and draw polyline
+                    # Redraw walls
+                    if cell_to_clear.has_top_wall:
+                        self._win.draw_line(Line(Point(x1, y1), Point(x2, y1)), "black")
+                    if cell_to_clear.has_right_wall:
+                        self._win.draw_line(Line(Point(x2, y1), Point(x2, y2)), "black")
+                    if cell_to_clear.has_bottom_wall:
+                        self._win.draw_line(Line(Point(x2, y2), Point(x1, y2)), "black")
+                    if cell_to_clear.has_left_wall:
+                        self._win.draw_line(Line(Point(x1, y2), Point(x1, y1)), "black")
+
         if is_backtracking:
-            if len(self._player_path_cells) > 0:
+            if self._player_path_cells:
                 self._player_path_cells.pop()  # remove last point on backtrack
         else:
-            self._player_path_cells.append(
-                player_center_point
-            )  # add current point if not backtracking
+            self._player_path_cells.append(player_center_point)
 
-        # draw continuous line path - using polyline by unpacking all points
+        # Redraw the entire path with updated colors
         if len(self._player_path_cells) >= 2:
-            self._win.draw_polyline(self._player_path_cells, line_color)
+            # Draw the primary path (red)
+            if len(self._player_path_cells[:-1]) >= 2:
+                self._win.draw_polyline(self._player_path_cells[:-1], LINE_COLOR)
 
-        # draw player as a circle - for debugging, can switch back to line later if needed
-        # player_center = Point(center_x, center_y)
-        # self._win.draw_oval(player_center, player_radius, "red")
+            # Draw the last segment (gray if backtracking, red otherwise)
+            if len(self._player_path_cells) >= 2:
+                last_segment = self._player_path_cells[-2:]
+                self._win.draw_polyline(last_segment, line_color)
 
         # update previous player position
         self._prev_player_col = self._player_col
         self._prev_player_row = self._player_row
 
     def _on_key_press(self, event):
-        if not self._manual_solve:
-            return
-        if (
-            self._manual_solve_finished
-        ):  # check if manual solve is finished, if so, ignore keypresses
+        if not self._manual_solve or self._manual_solve_finished:
             return
 
-        dx = 0
-        dy = 0
-        if event.keysym == "Up" or event.keysym == "w":
-            dy = -1
-        elif event.keysym == "Down" or event.keysym == "s":
-            dy = 1
-        elif event.keysym == "Left" or event.keysym == "a":
-            dx = -1
-        elif event.keysym == "Right" or event.keysym == "d":
-            dx = 1
+        key_direction = {
+            "Up": (0, -1),
+            "w": (0, -1),
+            "Down": (0, 1),
+            "s": (0, 1),
+            "Left": (-1, 0),
+            "a": (-1, 0),
+            "Right": (1, 0),
+            "d": (1, 0),
+        }
 
-        new_col = self._player_col + dx
-        new_row = self._player_row + dy
+        direction = key_direction.get(event.keysym)
+        if direction:
+            dx, dy = direction
+            new_col = self._player_col + dx
+            new_row = self._player_row + dy
 
-        if 0 <= new_col < self._num_cols and 0 <= new_row < self._num_rows:
-            if self._is_valid_move(
-                self._player_col, self._player_row, new_col, new_row
-            ):
-                # valid move
-                self._player_col = new_col
-                self._player_row = new_row
-                self._draw_player()
-                if (
-                    self._player_col == self._num_cols - 1
-                    and self._player_row == self._num_rows - 1
+            if 0 <= new_col < self._num_cols and 0 <= new_row < self._num_rows:
+                if self._is_valid_move(
+                    self._player_col, self._player_row, new_col, new_row
                 ):
-                    print("Maze Solved Manually!")  # trigger win condition
-                    self._manual_solve_finished = (
-                        True  # set flag to stop further movement
-                    )
+                    # valid move
+                    self._player_col = new_col
+                    self._player_row = new_row
+                    self._draw_player()
+                    if (
+                        self._player_col == self._num_cols - 1
+                        and self._player_row == self._num_rows - 1
+                    ):
+                        print("Maze Solved Manually!")  # trigger win condition
+                        self._manual_solve_finished = (
+                            True  # set flag to stop further movement
+                        )
 
     def _is_valid_move(self, old_col, old_row, new_col, new_row):
         if (
