@@ -1,5 +1,5 @@
 from cell import Cell
-from graphics import Point, Line
+from graphics import Point
 import time
 import random
 
@@ -30,7 +30,7 @@ class Maze:
         self._player_row = 0
         self._player_col = 0
         self._manual_solve = manual_solve
-        self._manual_solve_finished = False # add flag to track manual solve finish
+        self._manual_solve_finished = False  # add flag to track manual solve finish
         self._player_path_cells = []  # re-introduce and use to store path
         self._create_cells()
         self._break_entrance_and_exit()
@@ -206,9 +206,6 @@ class Maze:
         self._draw_player()
 
     def _draw_player(self):
-        """
-        draws a red circle to represent the player in the current cell
-        """
         cell = self._cells[self._player_col][self._player_row]
         center_x = (cell._x1 + cell._x2) / 2
         center_y = (cell._y1 + cell._y2) / 2
@@ -218,34 +215,47 @@ class Maze:
         # check for backtracking and update line color and path
         is_backtracking = False
         if len(self._player_path_cells) >= 2:
-            prev_path_point = self._player_path_cells[-2] # second to last point
-            if prev_path_point.x == player_center_point.x and prev_path_point.y == player_center_point.y:
+            prev_path_point = self._player_path_cells[-2]  # second to last point
+            if (
+                prev_path_point.x == player_center_point.x
+                and prev_path_point.y == player_center_point.y
+            ):
                 line_color = "gray"
                 is_backtracking = True
-
 
         # clear previous player path - by redrawing cells in the path - DRAW PATH *BEFORE* CLEARING CELLS
         if self._player_path_cells:
             for path_point in self._player_path_cells:
                 cell_to_clear_col = int((path_point.x - self._x1) // self._cell_size_x)
                 cell_to_clear_row = int((path_point.y - self._y1) // self._cell_size_y)
-                if 0 <= cell_to_clear_col < self._num_cols and 0 <= cell_to_clear_row < self._num_rows: # bounds check
+                if (
+                    0 <= cell_to_clear_col < self._num_cols
+                    and 0 <= cell_to_clear_row < self._num_rows
+                ):  # bounds check
                     cell_to_clear = self._cells[cell_to_clear_col][cell_to_clear_row]
-                    self._win.draw_rect(cell_to_clear._x1, cell_to_clear._y1, cell_to_clear._x2, cell_to_clear._y2, "white") # redraw with white to clear
-                    self._draw_cell(cell_to_clear_col, cell_to_clear_row) # redraw walls
-
+                    self._win.draw_rect(
+                        cell_to_clear._x1,
+                        cell_to_clear._y1,
+                        cell_to_clear._x2,
+                        cell_to_clear._y2,
+                        "white",
+                    )  # redraw with white to clear
+                    self._draw_cell(
+                        cell_to_clear_col, cell_to_clear_row
+                    )  # redraw walls
 
         # update path and draw polyline
         if is_backtracking:
             if len(self._player_path_cells) > 0:
-                self._player_path_cells.pop() # remove last point on backtrack
+                self._player_path_cells.pop()  # remove last point on backtrack
         else:
-            self._player_path_cells.append(player_center_point) # add current point if not backtracking
+            self._player_path_cells.append(
+                player_center_point
+            )  # add current point if not backtracking
 
         # draw continuous line path - using polyline by unpacking all points
         if len(self._player_path_cells) >= 2:
             self._win.draw_polyline(self._player_path_cells, line_color)
-
 
         # draw player as a circle - for debugging, can switch back to line later if needed
         # player_center = Point(center_x, center_y)
@@ -258,7 +268,9 @@ class Maze:
     def _on_key_press(self, event):
         if not self._manual_solve:
             return
-        if self._manual_solve_finished: # check if manual solve is finished, if so, ignore keypresses
+        if (
+            self._manual_solve_finished
+        ):  # check if manual solve is finished, if so, ignore keypresses
             return
 
         dx = 0
@@ -288,8 +300,9 @@ class Maze:
                     and self._player_row == self._num_rows - 1
                 ):
                     print("Maze Solved Manually!")  # trigger win condition
-                    self._manual_solve_finished = True # set flag to stop further movement
-
+                    self._manual_solve_finished = (
+                        True  # set flag to stop further movement
+                    )
 
     def _is_valid_move(self, old_col, old_row, new_col, new_row):
         if (
