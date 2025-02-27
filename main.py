@@ -22,8 +22,6 @@ def main():
     solved = maze.solve()
     if solved:
         print("Maze solved!")
-    else:
-        print("Maze can't be solved!")
     win.wait_for_close()
 
 
